@@ -6,7 +6,6 @@ import copy
 
 
 def main():
-
     """
     Main
     :return:
@@ -18,16 +17,16 @@ def main():
     Read jpg image from a file, into a nympy array
     """
     img_in = imageio.imread('assets/input/cat.jpg')
-    # print(img.dtype, img.shape)     # prints 'uint8 (400, 248, 3)'
 
     """
-    Convert to a bitmap,
-    black pixel is 0, white 255
-    divide by 255 to get matrix of 1's and 0's
+    Unpacking array in axis2 (depth; 3 values 0-255, each for one of RGB color channels) into bits.
+    from shape (400,248,3) to (400,248,24) - 24bit long coding of all colours (lumped together in one sequence),
+    And creating an empty canvas for receiving packets
     """
-    img_bit = (Functions.convert_to_bitmap(img_in)) / 255
 
-    img_out = np.zeros(img_bit.shape)   # Creating white picture - canvas for receiving packets
+    img_in = np.unpackbits(img_in, axis=2)
+
+    img_out = copy.deepcopy(img_in) * 0   # (Copy of input img) * 0 => empty pic with the same parameters as input img
 
     """
     SAW - frames are "send" to the receiver through function distorting them by
@@ -36,32 +35,35 @@ def main():
     if it was, frame is resend, until it arrives properly
     """
 
-    height, width = img_bit.shape
+    height, width, depth = img_in.shape
 
-    for h in range(height):                                     # iterating by height
-        for w in range(0, width, 4):                            # and by width
+    for h in range(height):                     # iterating by height
+        for w in range(width):                  # width
+            for d in range(0, depth, 8):        # and depth, step=8 to create three 1-byte packets from color sequence
 
-            frame = Frame(None, np.array(img_bit[h, w:w+4]))    # constructing a frame from 4 bits
-            frame.set_ctrlbit()                                 # setting its control bit
+                frame = Frame(None, np.array(img_in[h, w, d:d+8]))      # constructing a frame from 8 bits
+                frame.set_ctrlbit()                                     # setting its control bit
 
-            while True:                                         # Stop and Wait loop
+                while True:                                             # Stop and Wait loop
 
-                # Copy of the frame is run through BSC function and saved as sent packet
-                sent_packet = Functions.binary_symmetric_channel(probability, copy.deepcopy(frame))
+                    # Copy of the frame is run through BSC function and saved as sent packet
+                    sent_packet = Functions.binary_symmetric_channel(probability, copy.deepcopy(frame))
 
-                if sent_packet.checksum():                  # if bits are in agreement with parity bit they're saved
-                    img_out[h, w:w+4] = sent_packet.packet  # to a receiver, if not, frame is "re-sent"
-                    break
-                else:
-                    continue
+                    if sent_packet.checksum():                      # if bits are in agreement with parity bit they're
+                        img_out[h, w, d:d+8] = sent_packet.packet   # saved to a receiver, if not, frame is "re-sent"
+                        break
+                    else:
+                        continue
 
-    # converting matrix back to one made of 255's and 0's and saving as 'uint8'
-    img_out = (img_out * 255).astype(np.uint8)
+    """
+    Packing the array in axis2 back from bits, to create 3 color values for each pixel (0-255)
+    """
+    img_out = np.packbits(img_out, axis=2)
 
     """
     Writing changed image to file
     """
-    imageio.imwrite('assets/output/cat_bitmap.jpg', img_out)
+    imageio.imwrite('assets/output/cat.jpg', img_out)
 
 
 if __name__ == '__main__':

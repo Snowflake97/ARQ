@@ -1,4 +1,3 @@
-import imageio
 import numpy as np
 import time
 import pyautogui
@@ -27,32 +26,6 @@ def cls():
     pyautogui.hotkey('ctrl', 'l')
 
     # os.system('cls' if os.name == 'nt' else 'clear')
-
-
-def convert_to_bitmap(img):
-    """
-    takes read image in RGB scale and converts it to
-    a black and white bitmap
-
-    :param img:
-    :return:
-    """
-
-    arr = np.array(img)
-
-    # Split the three channels
-    r, g, b = np.split(arr, 3, axis=2)
-    r = r.reshape(-1)
-    g = r.reshape(-1)
-    b = r.reshape(-1)
-
-    # Standard RGB to grayscale
-    bitmap = list(map(lambda x: 0.299 * x[0] + 0.587 * x[1] + 0.114 * x[2],
-                      zip(r, g, b)))
-    bitmap = np.array(bitmap).reshape([arr.shape[0], arr.shape[1]])
-    bitmap = np.dot((bitmap > 128).astype(float), 255)
-
-    return bitmap.astype(np.uint8)
 
 
 def binary_symmetric_channel(probability, frame=None):
