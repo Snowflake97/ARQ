@@ -1,0 +1,11 @@
+Image transfer 2019/03/31 22:56:41
+Error probability - 10%
+Number of possible resends - unlimited
+Stop and Wait protocol
+Binary symetric chanel error model
+send frames - 797328
+correctly transferred frames - 797328
+error occurences - 78883
+corrected errors - 78883
+uncorrected errors - 0
+process time - 28.94

@@ -43,13 +43,11 @@ def binary_symmetric_channel(probability, frame=None):
     if frame is None:
         frame = Frame(1, np.zeros(8))          # failsafe if frame is not given
 
-    probability *= 100                          # gives probability in percent and parses it to int
-    probability = int(probability)              # e.g. prob = 0.1 => prob = 10
-
     rand = random.randint(1, 100)
 
     if rand in range(probability):                      # if rand is in range of probability
         rand = random.randrange(0, frame.__len__())     # then it rands again to choose which bit to modify
+
         if frame.packet[rand] == 1:                     # and then changes this bit's value
             frame.packet[rand] = 0
         else:
@@ -91,14 +89,12 @@ def gilberts_model(probability, frame=None, state=True):
     if frame is None:
         frame = Frame(1, np.zeros(8))          # failsafe if frame is not given
 
-    probability *= 100                          # gives probability in percent and parses it to int
-    probability = int(probability)              # e.g. prob = 0.1 => prob = 10
-
     rand = random.randint(1, 100)
 
     if state:                                               # if previous frame was sent correctly
         if rand in range(probability):                      # if rand is in range of probability
             rand = random.randrange(0, frame.__len__())     # then it rands again to choose which bit to modify
+
             if frame.packet[rand] == 1:                     # and then changes this bit's value
                 frame.packet[rand] = 0
             else:
@@ -107,13 +103,14 @@ def gilberts_model(probability, frame=None, state=True):
                                                 # when sending the previous frame
 
     elif not state:                             # if previous frame was sent with error
-        probability = 100 - probability         # inverts probability
-        if rand in range(probability):                      # if rand is in range of new probability
+        if rand in range(100 - probability):                      # if rand is in range of new probability
             rand = random.randrange(0, frame.__len__())     # then it rands again to choose which bit to modify
+
             if frame.packet[rand] == 1:                     # and then changes this bit's value
                 frame.packet[rand] = 0
             else:
                 frame.packet[rand] = 1
+
         else:
             state = True                        # changing the state after no error; True -> successful transmission
                                                 # when sending the prefious frame
@@ -133,16 +130,42 @@ def stop_and_wait(probability, img_in, img_out, resends_possible=None):
     :param img_out:
     :return:
     """
+
+    tframes = 0                             # number of transferred frames
+    errors = 0                              # number of errors during transmission
+    dframes = 0                             # number of uncorrected errors
+
     state = True                            # 'state' saves if frame became distorted or not (Gilbert's model)
+
     if resends_possible is None:            # failsafe if timeout is not given
         resends_possible = -1
 
     resends_left = copy.deepcopy(resends_possible)      # initialize counter for left resends
 
-    height, width, depth = img_in.shape         # setting variables based on sizes of each axis in array
+    height, width, depth = img_in.shape                 # setting variables based on sizes of each axis in array
 
     error_model = input("1. Binary Symetric Channel Model\n"    # choosing error model
                         "2. Gilbert's Model\n")
+
+    if error_model == '1':                  # ------------------------------------------------
+        model = 'Binary symetric chanel'    #
+    else:                                   #
+        model = "Gilbert's"                 #
+                                            # formating for print below and process statistics
+    if resends_possible == -1:              #
+        resendsstr = 'unlimited'            #
+    else:                                   #
+        resendsstr = resends_possible       # ------------------------------------------------
+
+    cls()
+
+    print('Transmission using Stop and Wait protocol\n'     # print with process info
+          '{err_model} error model\n'                       # while process is running
+          'error probability: {p}%\n'
+          'possible resends: {r}'.format(err_model=model, p=probability, r=resendsstr))
+    print('Processing...')
+
+    proccess_time = time.clock()            # getting current time
 
     for h in range(height):                 # iterating by height
         for w in range(width):              # width
@@ -166,12 +189,23 @@ def stop_and_wait(probability, img_in, img_out, resends_possible=None):
                         img_out[h, w, d:d + 8] = sent_packet.packet  # saved to a receiver
                         break
                     else:
+                        errors += 1                                     # errors counter++
+
                         if resends_left > 0:                            # if not, frame is resent if there are possible
                             resends_left -= 1                           # resends left and no. of resends is decreased.
                         elif resends_left == 0:                         # If there are no more resends left,
+                            dframes += 1                                # distorted frames counter++
                             img_out[h, w, d:d + 8] = np.zeros(8)        # errorframe is saved to the image;
                             resends_left = resends_possible             # resends are re-set; loop breaks,
                             break                                       # and next frame is sent
-                        continue
 
-    return img_out
+                        continue
+                tframes += 1                                            # transfered frames counter++
+
+    print("Transmission Complete")
+
+    proccess_time = time.clock() - proccess_time                        # getting process time
+    print(f"time: {round(proccess_time, 2)} seconds")
+
+    # returning image, and process statistics
+    return resends_possible, 'Stop and Wait', model, proccess_time, tframes, errors, dframes, img_out
