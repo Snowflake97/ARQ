@@ -41,7 +41,3 @@ class Frame:
 
     def __str__(self):
         return f'{self.packet} ctrl bit = {self.control_bit}'
-
-
-
-
