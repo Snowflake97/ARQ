@@ -2,6 +2,8 @@ import imageio
 import Functions
 import numpy as np
 import copy
+from PIL import Image
+import datetime
 
 
 def main():
@@ -13,7 +15,7 @@ def main():
     """
     Setting probability of error during transmission
     """
-    probability = float(input('Enter probability (0.00-1.00): '))          # probability of error; from 0.00 to 1.00
+    probability = int(input('Enter error probability in % (0 - 100): '))    # probability of error; from 0 to 100 %
 
     """
     Read jpg image from a file, into a nympy array
@@ -39,13 +41,15 @@ def main():
     resends = 0 => no error correction, every frame is saved no matter if correct or not
     resends = '' = -1 => 100% error correction, frame is being resent, untill correct transmission
     """
-    resends = input('Enter number of possible resends (for infinite number press [Enter]): ')   # enter natural number
+    resends = input('Enter number of possible resends (for unlimited press [Enter]): ')   # enter natural number
     if resends == '':
         resends = -1
     else:
         resends = int(resends)
 
-    img_out = Functions.stop_and_wait(probability, img_in, img_out, resends_possible=resends)
+    # returnes processed image, and process statistics
+    resends, protocol, model, process_time, tframes, errors, dframes, img_out = \
+        Functions.stop_and_wait(probability, img_in, img_out, resends_possible=resends)
 
     """
     Packing the array in axis2 back from bits, to create 3 color values for each pixel (0-255)
@@ -55,8 +59,30 @@ def main():
     """
     Writing changed image to file
     """
-
     imageio.imwrite('assets/output/image.jpg', img_out)
+
+    """
+    Writing process log, and showing image
+    """
+    logtime = datetime.datetime.today()     # getting current time and date
+
+    if resends == -1:
+        resends = 'unlimited'               # so the log says "unlimited" instead of "-1"
+
+    with open(f'logs/{logtime.strftime("%Y.%m.%d %H%M%S")}.txt', mode='w') as file:     # writing log to file
+        file.write(f'Image transfer {logtime.strftime("%Y/%m/%d %H:%M:%S")}\n'          # strftime() - formating
+                   f'Error probability - {probability}%\n'
+                   f'Number of possible resends - {resends}\n'
+                   f'{protocol} protocol\n'
+                   f'{model} error model\n'
+                   f'send frames - {tframes}\n'
+                   f'correctly transferred frames - {tframes-dframes}\n'
+                   f'error occurences - {errors}\n'
+                   f'corrected errors - {errors-dframes}\n'
+                   f'uncorrected errors - {dframes}\n'
+                   f'process time - {round(process_time, 2)}')
+
+    Image.Image.show(Image.open('assets/output/image.jpg'))         # showing image
 
 
 if __name__ == '__main__':

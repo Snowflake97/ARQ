@@ -1,0 +1,11 @@
+Image transfer 2019/03/31 22:58:17
+Error probability - 2%
+Number of possible resends - 2
+Stop and Wait protocol
+Gilbert's error model
+send frames - 797328
+correctly transferred frames - 718400
+error occurences - 236784
+corrected errors - 157856
+uncorrected errors - 78928
+process time - 31.79
