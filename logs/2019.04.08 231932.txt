@@ -1,0 +1,12 @@
+Image transfer 2019/04/08 23:19:32
+Error probability - 7%
+Number of possible resends - 2
+Selective Repeat protocol
+sent sequences of 4 frames
+Gilbert's error model
+send frames - 797328
+correctly transferred frames - 651103
+error occurences - 574424
+corrected errors - 428199
+uncorrected errors - 146225
+process time - 60.22

@@ -1,0 +1,12 @@
+Image transfer 2019/04/08 23:15:18
+Error probability - 30%
+Number of possible resends - 2
+Selective Repeat protocol
+sent sequences of 5 frames
+Binary symetric chanel error model
+send frames - 797328
+correctly transferred frames - 775776
+error occurences - 332640
+corrected errors - 311088
+uncorrected errors - 21552
+process time - 87.56

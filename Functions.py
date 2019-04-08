@@ -28,14 +28,17 @@ def cls():
 
     # os.system('cls' if os.name == 'nt' else 'clear')
 
-def clean_list(mylist):
-    newlist = []
-    for item in mylist:
-        # lots of code here, possibly setting things up for calling determine
-        if item != 'erase':
-            newlist.append(item)
-    mylist = newlist
-    return mylist
+
+# def clean_list(mylist):
+#     # newlist = []
+#     # for item in mylist:
+#     #     # lots of code here, possibly setting things up for calling determine
+#     #     if item != 'erase':
+#     #         newlist.append(item)
+#     # mylist = newlist
+#     # return mylist
+#
+#     return list(filter(lambda element: element != 'erase', mylist))
 
 
 def binary_symmetric_channel(probability, frame=None):
@@ -146,7 +149,7 @@ def stop_and_wait(probability, img_in, img_out, resends_possible=None):
 
     state = True                            # 'state' saves if frame became distorted or not (Gilbert's model)
 
-    if resends_possible is None:            # failsafe if timeout is not given
+    if resends_possible is None:            # failsafe if possible resends number is not given
         resends_possible = -1
 
     resends_left = copy.deepcopy(resends_possible)      # initialize counter for left resends
@@ -217,7 +220,7 @@ def stop_and_wait(probability, img_in, img_out, resends_possible=None):
     print(f"time: {round(proccess_time, 2)} seconds")
 
     # returning image, and process statistics
-    return resends_possible, 'Stop and Wait', model, proccess_time, tframes, errors, dframes, img_out
+    return 1, resends_possible, 'Stop and Wait', model, proccess_time, tframes, errors, dframes, img_out
 
 
 def selective_repeat(probability, img_in, img_out, resends_possible=None):
@@ -239,6 +242,8 @@ def selective_repeat(probability, img_in, img_out, resends_possible=None):
 
     state = True                            # 'state' saves if frame became distorted or not (Gilbert's model)
 
+    if resends_possible is None:            # failsafe if possible resends number is not given
+        resends_possible = -1
 
     height, width, depth = img_in.shape                 # setting variables based on sizes of each axis in array
 
@@ -258,7 +263,8 @@ def selective_repeat(probability, img_in, img_out, resends_possible=None):
     print('Transmission using Selective Repeat protocol\n'     # print with process info
           '{err_model} error model\n'                       # while process is running
           'error probability: {p}%\n'
-          'possible resends: {r}'.format(err_model=model, p=probability, r=resends_possible))
+          'possible resends: {r}\n'
+          'sending sequences of {ps} frames'.format(err_model=model, p=probability, r=resends_possible, ps=packet_size))
     print('Processing...')
 
     proccess_time = time.clock()            # getting current time
@@ -269,8 +275,14 @@ def selective_repeat(probability, img_in, img_out, resends_possible=None):
     for h in range(height):                 # iterating by height
         for w in range(width):              # width
             for d in range(0, depth, 8):    # and depth, step=8 to create three 1-byte packets from color sequence
-                frame_list = clean_list(frame_list)         # cleaning list, removing "erase" positions
-                sent_packets = clean_list(sent_packets)
+
+                # Cleaning lists - removing packets that were accepted by receiver
+                # Filtering out positions which have been replaced by 'erase' marker,
+                # leaving only packets that have not yet been accepted by receiver,
+                # and making place for next packets to be added
+                frame_list = list(filter(lambda element: element != 'erase', frame_list))
+                sent_packets = list(filter(lambda element: element != 'erase', sent_packets))
+
                 frame = Frame(None, np.array(img_in[h, w, d:d + 8]),h,w,d, resends_possible)    # constructing a frame from 8 bits
                 frame.set_ctrlbit()                            # setting its control bit
 
@@ -280,35 +292,44 @@ def selective_repeat(probability, img_in, img_out, resends_possible=None):
                     sent_packet = binary_symmetric_channel(probability, copy.deepcopy(frame))
                 elif error_model == '2':
                     state, sent_packet = gilberts_model(probability, copy.deepcopy(frame), state)
+
                 sent_packets.append(sent_packet)
 
-                while len(frame_list) == packet_size and 'erase' not in frame_list:       #sending packets in sequences
+                while (len(frame_list) == packet_size) and ('erase' not in frame_list):       #sending packets in sequences
                     for i in range(packet_size):                      # for every frame set position
+
                         frame_h = frame_list[i].h
                         frame_w = frame_list[i].w
                         frame_d = frame_list[i].d
+
                         if sent_packets[i].checksum():      # check if control bit matches
                             img_out[frame_h, frame_w, frame_d:frame_d + 8] = sent_packets[i].packet  #send packet in proper position
+
                             sent_packets[i] = 'erase'           # remove from list if packet was sended
                             frame_list[i] = 'erase'             # makes room for next packets
-                            tframes+=1
+
                         else:
-                            errors=+1
+                            errors += 1
+
                             if frame_list[i].resends == 0:
                                 img_out[frame_h, frame_w, frame_d:frame_d + 8] = np.zeros(8)       #send error packet
+
                                 sent_packets[i] = 'erase'           # makes room for next packets
                                 frame_list[i] = 'erase'
-                                dframes+=1
-                                tframes+=1
+
+                                dframes += 1
+
                             else:
-                                tframes+=1
-                                frame_list[i].resends = -1          #decrement possible resends value
+                                frame_list[i].resends -= 1          #decrement possible resends value
+
                                 if error_model == '1':
                                     sent_packets[i] = binary_symmetric_channel(probability, copy.deepcopy(frame_list[i]))   #send again exactly the same frame
                                 elif error_model == '2':
                                     state, sent_packets[i] = gilberts_model(probability, copy.deepcopy(frame_list[i]), state)
 
+                tframes += 1
+
     proccess_time = time.clock() - proccess_time                        # getting process time
     print(f"time: {round(proccess_time, 2)} seconds")
 
-    return resends_possible, 'Selective Repeat', model, proccess_time, tframes, errors, dframes, img_out
+    return packet_size, resends_possible, 'Selective Repeat', model, proccess_time, tframes, errors, dframes, img_out

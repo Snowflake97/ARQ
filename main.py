@@ -47,10 +47,20 @@ def main():
     else:
         resends = int(resends)
 
-    # returnes processed image, and process statistics
-    resends, protocol, model, process_time, tframes, errors, dframes, img_out = \
-        Functions.selective_repeat(probability, img_in, img_out, resends_possible=resends)
+    print('Choose protocol')
+    protocol = input('1. Stop and Wait\n'
+                     '2. Selective Repeat\n')
 
+    if protocol == '1':
+        # returnes processed image, and process statistics
+        packet_size, resends, protocol, model, process_time, tframes, errors, dframes, img_out = \
+            Functions.stop_and_wait(probability, img_in, img_out, resends_possible=resends)
+    elif protocol == '2':
+        # returnes processed image, and process statistics
+        packet_size, resends, protocol, model, process_time, tframes, errors, dframes, img_out = \
+            Functions.selective_repeat(probability, img_in, img_out, resends_possible=resends)
+    else:
+        quit(0)
     """
     Packing the array in axis2 back from bits, to create 3 color values for each pixel (0-255)
     """
@@ -73,8 +83,12 @@ def main():
         file.write(f'Image transfer {logtime.strftime("%Y/%m/%d %H:%M:%S")}\n'          # strftime() - formating
                    f'Error probability - {probability}%\n'
                    f'Number of possible resends - {resends}\n'
-                   f'{protocol} protocol\n'
-                   f'{model} error model\n'
+                   f'{protocol} protocol\n')
+
+        if packet_size != 1:
+            file.write(f'sent sequences of {packet_size} frames\n')
+
+        file.write(f'{model} error model\n'
                    f'send frames - {tframes}\n'
                    f'correctly transferred frames - {tframes-dframes}\n'
                    f'error occurences - {errors}\n'
