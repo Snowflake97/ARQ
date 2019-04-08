@@ -49,7 +49,7 @@ def main():
 
     # returnes processed image, and process statistics
     resends, protocol, model, process_time, tframes, errors, dframes, img_out = \
-        Functions.stop_and_wait(probability, img_in, img_out, resends_possible=resends)
+        Functions.selective_repeat(probability, img_in, img_out, resends_possible=resends)
 
     """
     Packing the array in axis2 back from bits, to create 3 color values for each pixel (0-255)

@@ -7,9 +7,13 @@ class Frame:
     and control (parity) bit indicating if the "1" bit no. is even
     """
 
-    def __init__(self, control_bit=None, packet=np.array([])):
+    def __init__(self, control_bit=None, packet=np.array([]), h=0, w=0, d=0,resends = 0):
         self.packet = packet
         self.control_bit = control_bit
+        self.h = h
+        self.w = w
+        self.d = d
+        self.resends = resends
 
     def checksum(self):
         """
