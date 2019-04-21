@@ -1,0 +1,63 @@
+import numpy as np
+from Frame import Frame
+import random
+
+def gilberts_model(probability, frame=None, state=True):
+    """
+    Takes a frame and distorts it based on probabilty(param);
+    every frame has a chance to become distorted, and to arrive correctly
+    P(error) + P(no error) = 100%
+    After error occurence, probabilities are swapped;
+    and swapped again after correct transmission.
+    errors and correct transmissions are grouped together.
+
+    e.g.
+    P(error) = 10%
+    P(no error) = 90%
+
+    *error occures*
+
+    P(error) = 90%
+    P(no error) = 10%
+
+    *correct transmission*
+
+    P(error) = 10%
+    P(no error) = 90%
+
+
+    :param probability:
+    :param frame:
+    :param state:
+    :return:
+    """
+
+    if frame is None:
+        frame = Frame(1, np.zeros(8))          # failsafe if frame is not given
+
+    rand = random.randint(1, 100)
+
+    if state:                                               # if previous frame was sent correctly
+        if rand in range(1, probability + 1):                      # if rand is in range of probability
+            rand = random.randrange(0, frame.__len__())     # then it rands again to choose which bit to modify
+
+            if frame.packet[rand] == 1:                     # and then changes this bit's value
+                frame.packet[rand] = 0
+            else:
+                frame.packet[rand] = 1
+            state = False                       # changing the state after error; False -> error occured
+                                                # when sending the previous frame
+
+    elif not state:                             # if previous frame was sent with error
+        if rand in range(100 - probability):                      # if rand is in range of new probability
+            rand = random.randrange(0, frame.__len__())     # then it rands again to choose which bit to modify
+
+            if frame.packet[rand] == 1:                     # and then changes this bit's value
+                frame.packet[rand] = 0
+            else:
+                frame.packet[rand] = 1
+
+        else:
+            state = True                        # changing the state after no error; True -> successful transmission
+                                                # when sending the prefious frame
+    return state, frame                         # returns frame, and state after transmission
