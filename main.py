@@ -4,6 +4,9 @@ import numpy as np
 import copy
 from PIL import Image
 import datetime
+from selective_repeat import selective_repeat
+from stop_and_wait import stop_and_wait
+from go_back_n import go_back_n
 
 
 def main():
@@ -49,16 +52,20 @@ def main():
 
     print('Choose protocol')
     protocol = input('1. Stop and Wait\n'
-                     '2. Selective Repeat\n')
+                     '2. Selective Repeat\n'
+                     '3. Go back n\n')
 
     if protocol == '1':
         # returnes processed image, and process statistics
         packet_size, resends, protocol, model, process_time, tframes, errors, dframes, img_out = \
-            Functions.stop_and_wait(probability, img_in, img_out, resends_possible=resends)
+            stop_and_wait(probability, img_in, img_out, resends_possible=resends)
     elif protocol == '2':
         # returnes processed image, and process statistics
         packet_size, resends, protocol, model, process_time, tframes, errors, dframes, img_out = \
-            Functions.selective_repeat(probability, img_in, img_out, resends_possible=resends)
+            selective_repeat(probability, img_in, img_out, resends_possible=resends)
+    elif protocol == '3':
+        packet_size, resends, protocol, model, process_time, tframes, errors, dframes, img_out = \
+            go_back_n(probability, img_in, img_out, resends_possible=resends)
     else:
         quit(0)
     """
