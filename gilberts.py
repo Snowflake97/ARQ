@@ -35,29 +35,28 @@ def gilberts_model(probability, frame=None, state=True):
     if frame is None:
         frame = Frame(1, np.zeros(8))          # failsafe if frame is not given
 
-    rand = random.randint(1, 100)
+    for index in range(frame.__len__()):
+        rand = random.randint(1, 100)
 
-    if state:                                               # if previous frame was sent correctly
-        if rand in range(1, probability + 1):                      # if rand is in range of probability
-            rand = random.randrange(0, frame.__len__())     # then it rands again to choose which bit to modify
+        if state:                                               # if previous frame was sent correctly
+            if rand in range(1, probability + 1):                      # if rand is in range of probability
 
-            if frame.packet[rand] == 1:                     # and then changes this bit's value
-                frame.packet[rand] = 0
+                if frame.packet[index] == 1:                     # and then changes this bit's value
+                    frame.packet[index] = 0
+                else:
+                    frame.packet[index] = 1
+                state = False                       # changing the state after error; False -> error occured
+                                                    # when sending the previous frame
+
+        elif not state:                             # if previous frame was sent with error
+            if rand in range(100 - probability):                      # if rand is in range of new probability
+
+                if frame.packet[index] == 1:                     # and then changes this bit's value
+                    frame.packet[index] = 0
+                else:
+                    frame.packet[index] = 1
+
             else:
-                frame.packet[rand] = 1
-            state = False                       # changing the state after error; False -> error occured
-                                                # when sending the previous frame
-
-    elif not state:                             # if previous frame was sent with error
-        if rand in range(100 - probability):                      # if rand is in range of new probability
-            rand = random.randrange(0, frame.__len__())     # then it rands again to choose which bit to modify
-
-            if frame.packet[rand] == 1:                     # and then changes this bit's value
-                frame.packet[rand] = 0
-            else:
-                frame.packet[rand] = 1
-
-        else:
-            state = True                        # changing the state after no error; True -> successful transmission
-                                                # when sending the prefious frame
-    return state, frame                         # returns frame, and state after transmission
+                state = True                        # changing the state after no error; True -> successful transmission
+                                                    # when sending the prefious frame
+    return state, frame                             # returns frame, and state after transmission
