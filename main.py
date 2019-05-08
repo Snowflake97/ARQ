@@ -1,3 +1,4 @@
+import random
 import imageio
 import Functions
 import numpy as np
@@ -19,6 +20,7 @@ def main():
     Setting probability of error during transmission
     """
     probability = int(input('Enter error probability in % (0 - 100): '))    # probability of error; from 0 to 100 %
+    random.seed(1973)
 
     """
     Read jpg image from a file, into a nympy array
