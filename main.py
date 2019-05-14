@@ -1,6 +1,6 @@
 import random
 import imageio
-import Functions
+# import Functions
 import numpy as np
 import copy
 from PIL import Image
@@ -10,6 +10,9 @@ from stop_and_wait import stop_and_wait
 from go_back_n import go_back_n
 
 
+random.seed(5000)
+
+
 def main():
     """
     Main
@@ -17,10 +20,24 @@ def main():
     """
 
     """
+    variables to count errors,error corrections, and uncorrected errors;
+    dictionaries to choose error model, protocol, and check type
+    """
+
+    tframes = 0
+    errors = 0
+    dframes = 0
+    error_models_dict = {'1': 'Binary Symmetric Channel', '2': "Gilbert's"}
+    protocols_dict = {'1': 'Stop and Wait', '2': 'Selective Repeat', '3': 'Go Back n'}
+    checks_dict = {'1': 'Parity bit', '2': 'Crc32'}
+
+    packet_size = 1
+    process_time = 0
+
+    """
     Setting probability of error during transmission
     """
-    probability = int(input('Enter error probability in % (0 - 100): '))    # probability of error; from 0 to 100 %
-    random.seed(1973)
+    probability = float(input('Enter error probability in % (0.00 - 100.00): '))
 
     """
     Read jpg image from a file, into a nympy array
@@ -52,24 +69,41 @@ def main():
     else:
         resends = int(resends)
 
-    print('Choose protocol')
-    protocol = input('1. Stop and Wait\n'
-                     '2. Selective Repeat\n'
-                     '3. Go back n\n')
+    """
+    Choosing protocol, error model, and check type
+    """
 
-    if protocol == '1':
-        # returnes processed image, and process statistics
-        packet_size, resends, protocol, model, process_time, tframes, errors, dframes, img_out = \
-            stop_and_wait(probability, img_in, img_out, resends_possible=resends)
-    elif protocol == '2':
-        # returnes processed image, and process statistics
-        packet_size, resends, protocol, model, process_time, tframes, errors, dframes, img_out = \
-            selective_repeat(probability, img_in, img_out, resends_possible=resends)
-    elif protocol == '3':
-        packet_size, resends, protocol, model, process_time, tframes, errors, dframes, img_out = \
-            go_back_n(probability, img_in, img_out, resends_possible=resends)
+    print('Choose protocol')
+    protocol = protocols_dict[input('1. Stop and Wait\n'
+                                    '2. Selective Repeat\n'
+                                    '3. Go Back n\n')]
+
+    print('Choose error model')
+    model = error_models_dict[input('1. Binary Symetric Channel\n'
+                                    "2. Gilbert's model\n")]
+
+    print('Choose check type')
+    check = checks_dict[input('1. Parity bit\n'
+                              '2. Crc32\n')]
+
+    # returns processed image, and process statistics
+    if protocol == 'Stop and Wait':
+        packet_size, resends, process_time, tframes, errors, dframes, img_out = \
+            stop_and_wait(probability, img_in, img_out,
+                          resends_possible=resends, check_type=check, error_model=model)
+
+    elif protocol == 'Selective Repeat':
+        packet_size, resends, process_time, tframes, errors, dframes, img_out = \
+            selective_repeat(probability, img_in, img_out,
+                             resends_possible=resends, check_type=check, error_model=model)
+
+    elif protocol == 'Go Back n':
+        packet_size, resends, process_time, tframes, errors, dframes, img_out = \
+            go_back_n(probability, img_in, img_out,
+                      resends_possible=resends, check_type=check, error_model=model)
     else:
         quit(0)
+
     """
     Packing the array in axis2 back from bits, to create 3 color values for each pixel (0-255)
     """
@@ -78,18 +112,18 @@ def main():
     """
     Writing changed image to file
     """
-    imageio.imwrite('assets/output/image.jpg', img_out)
+    file_name = datetime.datetime.today()  # getting current time and date
+    imageio.imwrite(f'assets/output/{file_name.strftime("%Y.%m.%d %H%M%S")}.jpg', img_out)
 
     """
     Writing process log, and showing image
     """
-    logtime = datetime.datetime.today()     # getting current time and date
 
     if resends == -1:
         resends = 'unlimited'               # so the log says "unlimited" instead of "-1"
 
-    with open(f'logs/{logtime.strftime("%Y.%m.%d %H%M%S")}.txt', mode='w') as file:     # writing log to file
-        file.write(f'Image transfer {logtime.strftime("%Y/%m/%d %H:%M:%S")}\n'          # strftime() - formating
+    with open(f'logs/{file_name.strftime("%Y.%m.%d %H%M%S")}.txt', mode='w') as file:     # writing log to file
+        file.write(f'Image transfer {file_name.strftime("%Y/%m/%d %H:%M:%S")}\n'          # strftime() - formating
                    f'Error probability - {probability}%\n'
                    f'Number of possible resends - {resends}\n'
                    f'{protocol} protocol\n')
@@ -98,6 +132,7 @@ def main():
             file.write(f'sent sequences of {packet_size} frames\n')
 
         file.write(f'{model} error model\n'
+                   f'{check} check type\n'
                    f'send frames - {tframes}\n'
                    f'correctly transferred frames - {tframes-dframes}\n'
                    f'error occurences - {errors}\n'
@@ -105,7 +140,7 @@ def main():
                    f'uncorrected errors - {dframes}\n'
                    f'process time - {round(process_time, 2)}')
 
-    Image.Image.show(Image.open('assets/output/image.jpg'))         # showing image
+    Image.Image.show(Image.open(f'assets/output/{file_name.strftime("%Y.%m.%d %H%M%S")}.jpg'))         # showing image
 
 
 if __name__ == '__main__':

@@ -14,11 +14,13 @@ def binary_symmetric_channel(probability, frame=None):
     :return:
     """
 
+    probability = int(probability*100)
+
     if frame is None:
         frame = Frame(1, np.zeros(8))          # failsafe if frame is not given
 
     for index in range(frame.__len__()):
-        rand = random.randint(1, 100)
+        rand = random.randint(1, 10000)
         if rand in range(1, probability + 1):                      # if rand is in range of probability
 
             if frame.packet[index] == 1:                     # and then changes this bit's value

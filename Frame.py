@@ -7,15 +7,15 @@ class Frame:
     and control (parity) bit indicating if the "1" bit no. is even
     """
 
-    def __init__(self, control_bit=None, packet=np.array([]), h=0, w=0, d=0,resends = 0, polynomial_bitstring ='1011' ):
+    def __init__(self, packet=np.array([]), h=0, w=0, d=0, resends=0, polynomial_bitstring='1011'):
         self.packet = packet
-        self.control_bit = control_bit
+        self.control_bit = self.set_ctrlbit()
         self.h = h
         self.w = w
         self.d = d
         self.resends = resends
-        self.polynomial_bitstring = polynomial_bitstring        #polynomial used to devision in crc
-        self.reminder = self.crc_remainder()            # reminder sets by function crc.reminder()
+        self.polynomial_bitstring = polynomial_bitstring        # polynomial used to devision in crc
+        self.reminder = self.crc_remainder()                    # reminder sets by function crc.reminder()
 
     def checksum(self):
         """
@@ -38,10 +38,9 @@ class Frame:
         """
 
         if sum(self.packet) % 2 == 0:
-            self.control_bit = 1
+            return 1
         else:
-            self.control_bit = 0
-
+            return 0
 
     def __len__(self):
         return self.packet.size
@@ -59,11 +58,15 @@ class Frame:
             mystring += str(element)
         return mystring
 
-    def crc_remainder(self, initial_filler = '0'):
-        '''
+    def crc_remainder(self, initial_filler='0'):
+        """
         Calculates the CRC remainder of a string of bits using a chosen polynomial.
         initial_filler should be '1' or '0'.
-        '''
+
+        :param initial_filler:
+        :return:
+        """
+
         input_bitstring = self.change_packet_to_string()
         bitstring = self.polynomial_bitstring
         bitstring = bitstring.lstrip('0')
@@ -75,12 +78,16 @@ class Frame:
             for i in range(len(bitstring)):
                 input_padded_array[cur_shift + i] = str(
                     int(bitstring[i] != input_padded_array[cur_shift + i]))
-        return (''.join(input_padded_array)[len_input:])
+        return ''.join(input_padded_array)[len_input:]
 
-    def crc_check(self,check_value):
-        '''
+    def crc_check(self, check_value):
+        """
         Calculates the CRC check of a string of bits using a chosen polynomial.
-        '''
+
+        :param check_value:
+        :return:
+        """
+
         input_bitstring = self.change_packet_to_string()
         bitstring = self.polynomial_bitstring
         bitstring = bitstring.lstrip('0')
@@ -92,6 +99,4 @@ class Frame:
             for i in range(len(bitstring)):
                 input_padded_array[cur_shift + i] = str(
                     int(bitstring[i] != input_padded_array[cur_shift + i]))
-        return ('1' not in ''.join(input_padded_array)[len_input:])
-
-
+        return '1' not in ''.join(input_padded_array)[len_input:]

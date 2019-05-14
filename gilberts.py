@@ -2,6 +2,7 @@ import numpy as np
 from Frame import Frame
 import random
 
+
 def gilberts_model(probability, frame=None, state=True):
     """
     Takes a frame and distorts it based on probabilty(param);
@@ -32,11 +33,13 @@ def gilberts_model(probability, frame=None, state=True):
     :return:
     """
 
+    probability = int(probability*100)
+
     if frame is None:
         frame = Frame(1, np.zeros(8))          # failsafe if frame is not given
 
     for index in range(frame.__len__()):
-        rand = random.randint(1, 100)
+        rand = random.randint(1, 10000)
 
         if state:                                               # if previous frame was sent correctly
             if rand in range(1, probability + 1):                      # if rand is in range of probability
@@ -49,7 +52,7 @@ def gilberts_model(probability, frame=None, state=True):
                                                     # when sending the previous frame
 
         elif not state:                             # if previous frame was sent with error
-            if rand in range(100 - probability):                      # if rand is in range of new probability
+            if rand in range(10000 - probability):                      # if rand is in range of new probability
 
                 if frame.packet[index] == 1:                     # and then changes this bit's value
                     frame.packet[index] = 0
