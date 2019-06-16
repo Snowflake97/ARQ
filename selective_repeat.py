@@ -25,7 +25,6 @@ def selective_repeat(probability, img_in, img_out, resends_possible=None, check_
     tframes = 0                             # number of transferred frames
     errors = 0                              # number of errors during transmission
     dframes = 0                             # number of uncorrected errors
-    cframes = 0                             # number of changed frames after bsc/gilberts
 
     state = True                            # 'state' saves if frame became distorted or not (Gilbert's model)
 
@@ -81,9 +80,6 @@ def selective_repeat(probability, img_in, img_out, resends_possible=None, check_
 
                 sent_packets.append(sent_packet)
 
-                if frame.packet.all() != sent_packet.packet.all():
-                    cframes += 1
-
                 while (len(frame_list) == packet_size) and ('erase' not in frame_list):   # sending packets in sequences
                     for i in range(packet_size):                      # for every frame set position
 
@@ -130,6 +126,5 @@ def selective_repeat(probability, img_in, img_out, resends_possible=None, check_
                 tframes += 1
 
     proccess_time = time.clock() - proccess_time                        # getting process time
-    print(f"time: {round(proccess_time, 2)} seconds")
 
-    return packet_size, resends_possible, proccess_time, tframes, errors, dframes,cframes, img_out
+    return packet_size, resends_possible, proccess_time, tframes, errors, dframes, img_out

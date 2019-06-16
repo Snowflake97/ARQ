@@ -26,7 +26,6 @@ def stop_and_wait(probability, img_in, img_out, resends_possible=None, check_typ
     tframes = 0                             # number of transferred frames
     errors = 0                              # number of errors during transmission
     dframes = 0                             # number of uncorrected errors
-    cframes = 0                             # number of changed frames after bsc/gilberts
 
     state = True                            # 'state' saves if frame became distorted or not (Gilbert's model)
 
@@ -70,9 +69,6 @@ def stop_and_wait(probability, img_in, img_out, resends_possible=None, check_typ
                     else:
                         sent_packet = Frame(np.zeros(8))
 
-                    if frame.packet.all() != sent_packet.packet.all():
-                        cframes = cframes + 1
-
                     if check_type == 'Parity bit':
                         check_result = sent_packet.checksum()
                     elif check_type == 'Crc32':
@@ -100,7 +96,6 @@ def stop_and_wait(probability, img_in, img_out, resends_possible=None, check_typ
     print("Transmission Complete")
 
     proccess_time = time.clock() - proccess_time                        # getting process time
-    print(f"time: {round(proccess_time, 2)} seconds")
 
     # returning image, and process statistics
-    return 1, resends_possible, proccess_time, tframes, errors, dframes,cframes, img_out
+    return 1, resends_possible, proccess_time, tframes, errors, dframes, img_out

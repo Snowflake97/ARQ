@@ -89,21 +89,32 @@ def main():
 
     # returns processed image, and process statistics
     if protocol == 'Stop and Wait':
-        packet_size, resends, process_time, tframes, errors, dframes,cframes, img_out = \
+        packet_size, resends, process_time, tframes, errors, dframes, img_out = \
             stop_and_wait(probability, img_in, img_out,
                           resends_possible=resends, check_type=check, error_model=model)
 
     elif protocol == 'Selective Repeat':
-        packet_size, resends, process_time, tframes, errors, dframes,cframes, img_out = \
+        packet_size, resends, process_time, tframes, errors, dframes, img_out = \
             selective_repeat(probability, img_in, img_out,
                              resends_possible=resends, check_type=check, error_model=model)
 
     elif protocol == 'Go Back n':
-        packet_size, resends, process_time, tframes, errors, dframes,cframes, img_out = \
+        packet_size, resends, process_time, tframes, errors, dframes, img_out = \
             go_back_n(probability, img_in, img_out,
                       resends_possible=resends, check_type=check, error_model=model)
     else:
         quit(0)
+
+    height, width, depth = img_in.shape
+    for h in range(height):  # iterating by height
+        for w in range(width):  # width
+            for d in range(0, depth, 8):  # and depth, step=8 to create three 1-byte packets from color sequence
+                x = np.array(img_in[h, w, d:d+8])
+                y = np.array(img_out[h, w, d:d+8])
+                if not np.array_equal(x, y):
+                    cframes += 1
+
+    print(f"time: {round(process_time, 2)} seconds")
 
     """
     Packing the array in axis2 back from bits, to create 3 color values for each pixel (0-255)
@@ -135,12 +146,13 @@ def main():
         file.write(f'{model} error model\n'
                    f'{check} check type\n'
                    f'send frames - {tframes}\n'
-                   f'correctly transferred frames - {tframes-dframes}\n'
-                   f'error occurences - {errors}\n'
-                   f'corrected errors - {errors-dframes}\n'
-                   f'uncorrected errors - {dframes}\n'
-                   f'process time - {round(process_time, 2)}\n'
-                   f'changed frames - {cframes}\n')
+                   f'correctly transferred frames - {tframes-cframes}\n'
+                   f'error occurences - {cframes}\n'
+                   f'detected errors - {errors}\n'
+                   f'detected and corrected errors - {errors-dframes}\n'
+                   f'detected and uncorrected errors - {dframes}\n'
+                   f'undetected errors - {cframes-errors}\n'
+                   f'process time - {round(process_time, 2)}\n')
 
     Image.Image.show(Image.open(f'assets/output/{file_name.strftime("%Y.%m.%d %H%M%S")}.jpg'))         # showing image
 
