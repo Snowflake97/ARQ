@@ -147,11 +147,11 @@ def main():
                    f'{check} check type\n'
                    f'send frames - {tframes}\n'
                    f'correctly transferred frames - {tframes-cframes}\n'
-                   f'error occurences - {cframes}\n'
-                   f'detected errors - {errors}\n'
-                   f'detected and corrected errors - {errors-dframes}\n'
+                   f'incorrectly transferred frames - {cframes}\n'
+                   f'detected errors(including repeated transmissions) - {errors}\n'
+                   f'detected and corrected errors(including repeated transmissions) - {errors-dframes}\n'
                    f'detected and uncorrected errors - {dframes}\n'
-                   f'undetected errors - {cframes-errors}\n'
+                   f'undetected errors - {cframes-dframes}\n'
                    f'process time - {round(process_time, 2)}\n')
 
     Image.Image.show(Image.open(f'assets/output/{file_name.strftime("%Y.%m.%d %H%M%S")}.jpg'))         # showing image
