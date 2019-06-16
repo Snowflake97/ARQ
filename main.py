@@ -27,6 +27,7 @@ def main():
     tframes = 0
     errors = 0
     dframes = 0
+    cframes = 0
     error_models_dict = {'1': 'Binary Symmetric Channel', '2': "Gilbert's"}
     protocols_dict = {'1': 'Stop and Wait', '2': 'Selective Repeat', '3': 'Go Back n'}
     checks_dict = {'1': 'Parity bit', '2': 'Crc32'}
@@ -88,17 +89,17 @@ def main():
 
     # returns processed image, and process statistics
     if protocol == 'Stop and Wait':
-        packet_size, resends, process_time, tframes, errors, dframes, img_out = \
+        packet_size, resends, process_time, tframes, errors, dframes,cframes, img_out = \
             stop_and_wait(probability, img_in, img_out,
                           resends_possible=resends, check_type=check, error_model=model)
 
     elif protocol == 'Selective Repeat':
-        packet_size, resends, process_time, tframes, errors, dframes, img_out = \
+        packet_size, resends, process_time, tframes, errors, dframes,cframes, img_out = \
             selective_repeat(probability, img_in, img_out,
                              resends_possible=resends, check_type=check, error_model=model)
 
     elif protocol == 'Go Back n':
-        packet_size, resends, process_time, tframes, errors, dframes, img_out = \
+        packet_size, resends, process_time, tframes, errors, dframes,cframes, img_out = \
             go_back_n(probability, img_in, img_out,
                       resends_possible=resends, check_type=check, error_model=model)
     else:
@@ -138,7 +139,8 @@ def main():
                    f'error occurences - {errors}\n'
                    f'corrected errors - {errors-dframes}\n'
                    f'uncorrected errors - {dframes}\n'
-                   f'process time - {round(process_time, 2)}')
+                   f'process time - {round(process_time, 2)}\n'
+                   f'changed frames - {cframes}\n')
 
     Image.Image.show(Image.open(f'assets/output/{file_name.strftime("%Y.%m.%d %H%M%S")}.jpg'))         # showing image
 
