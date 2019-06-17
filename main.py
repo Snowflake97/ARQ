@@ -113,6 +113,7 @@ def main():
                 y = np.array(img_out[h, w, d:d+8])
                 if not np.array_equal(x, y):
                     cframes += 1
+                tframes += 1
 
     print(f"time: {round(process_time, 2)} seconds")
 

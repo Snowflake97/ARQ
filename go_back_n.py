@@ -79,7 +79,7 @@ def go_back_n(probability, img_in, img_out, resends_possible=None, check_type=''
                 elif error_model == "Gilbert's":
                     state, sent_packet = gilberts_model(probability, copy.deepcopy(frame), state)
                 else:
-                    sent_packet = Frame(np.zeros(8))
+                    sent_packet = copy.deepcopy(frame)
 
                 sent_packets.append(sent_packet)
 
@@ -93,17 +93,27 @@ def go_back_n(probability, img_in, img_out, resends_possible=None, check_type=''
                         check_result = True
 
                     if check_result is False:
-                        errors += 1
+
                         if frame_list[0].resends == 0:      # check for possible resend
                             for position, _ in enumerate(sent_packets):     # if there arent fill packet with zeros
+                                error_packet = np.array([0, 0, 0, 0, 0, 0, 0, 0])
+
+                                for bit in range(frame_list[position].__len__()):
+                                    if frame_list[position].packet[bit] == 0:
+                                        error_packet[bit] = 1
+                                    elif frame_list[position].packet[bit] == 1:
+                                        error_packet[bit] = 0
+
                                 frame_h = frame_list[position].h
                                 frame_w = frame_list[position].w
                                 frame_d = frame_list[position].d
-                                img_out[frame_h, frame_w, frame_d:frame_d + 8] = np.zeros(8)
+                                img_out[frame_h, frame_w, frame_d:frame_d + 8] = error_packet
                                 sent_packets[position] = 'erase'       # prepare for delate
                                 frame_list[position] = 'erase'
-                                dframes += 1                       # increase number of disorted frames
+                                dframes += 1                    # increase number of disorted frames
+                                errors += 1
                         else:                                  # resending whole packet
+                            errors += 1
                             for i in range(packet_size):
                                 frame_list[i].resends -= 1
                                 if error_model == 'Binary Symmetric Channel':
@@ -121,7 +131,6 @@ def go_back_n(probability, img_in, img_out, resends_possible=None, check_type=''
                         img_out[frame_h, frame_w, frame_d:frame_d + 8] = sent_packets[0].packet
                         sent_packets[0] = 'erase'  # remove from list if packet was sent
                         frame_list[0] = 'erase'
-                        tframes += 1
 
     proccess_time = time.clock() - proccess_time                        # getting process time
 

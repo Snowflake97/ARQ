@@ -67,7 +67,7 @@ def stop_and_wait(probability, img_in, img_out, resends_possible=None, check_typ
                         # Copy of the frame is run through gilbert's model function and saved as sent packet
                         state, sent_packet = gilberts_model(probability, copy.deepcopy(frame), state)
                     else:
-                        sent_packet = Frame(np.zeros(8))
+                        sent_packet = copy.deepcopy(frame)
 
                     if check_type == 'Parity bit':
                         check_result = sent_packet.checksum()
@@ -81,17 +81,16 @@ def stop_and_wait(probability, img_in, img_out, resends_possible=None, check_typ
                         break
                     else:
                         errors += 1                                     # errors counter++
-
                         if resends_left > 0:                            # if not, frame is resent if there are possible
                             resends_left -= 1                           # resends left and no. of resends is decreased.
                         elif resends_left == 0:                         # If there are no more resends left,
                             dframes += 1                                # distorted frames counter++
-                            img_out[h, w, d:d + 8] = np.zeros(8)        # errorframe is saved to the image;
+                            img_out[h, w, d:d + 8] = sent_packet.packet        # errorframe is saved to the image;
                             resends_left = resends_possible             # resends are re-set; loop breaks,
                             break                                       # and next frame is sent
 
                         continue
-                tframes += 1                                            # transfered frames counter++
+                                                            # transfered frames counter++
 
     print("Transmission Complete")
 

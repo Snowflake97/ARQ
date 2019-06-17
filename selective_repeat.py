@@ -72,11 +72,12 @@ def selective_repeat(probability, img_in, img_out, resends_possible=None, check_
 
                 frame_list.append(frame)        # keeping few frames in memory
 
-                if error_model == 'Binary Symmetric Channel':                    sent_packet = binary_symmetric_channel(probability, copy.deepcopy(frame))
+                if error_model == 'Binary Symmetric Channel':
+                    sent_packet = binary_symmetric_channel(probability, copy.deepcopy(frame))
                 elif error_model == "Gilbert's":
                     state, sent_packet = gilberts_model(probability, copy.deepcopy(frame), state)
                 else:
-                    sent_packet = Frame(np.zeros(8))
+                    sent_packet = copy.deepcopy(frame)
 
                 sent_packets.append(sent_packet)
 
@@ -105,7 +106,7 @@ def selective_repeat(probability, img_in, img_out, resends_possible=None, check_
                             errors += 1
 
                             if frame_list[i].resends == 0:
-                                img_out[frame_h, frame_w, frame_d:frame_d + 8] = np.zeros(8)    # send 'error packet'
+                                img_out[frame_h, frame_w, frame_d:frame_d + 8] = sent_packets[i].packet   # send 'error packet'
 
                                 sent_packets[i] = 'erase'           # makes room for next packets
                                 frame_list[i] = 'erase'
@@ -123,7 +124,7 @@ def selective_repeat(probability, img_in, img_out, resends_possible=None, check_
                                     state, sent_packets[i] = gilberts_model(probability,
                                                                             copy.deepcopy(frame_list[i]), state)
 
-                tframes += 1
+
 
     proccess_time = time.clock() - proccess_time                        # getting process time
 
